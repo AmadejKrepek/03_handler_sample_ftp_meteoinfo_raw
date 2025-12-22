@@ -1,0 +1,16 @@
+name: wrf_icond2
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - netCDF4
+  - cartopy
+  - wrf-python
+  - matplotlib
+  - numpy
+  - xarray
+  - dask
+  - scipy
+  - cmocean
+  - ipykernel
