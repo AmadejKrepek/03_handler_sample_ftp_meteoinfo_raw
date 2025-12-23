@@ -11,7 +11,7 @@ RUN dnf install -y \
 # Copy the Miniconda install script into the container
 COPY install_miniconda.sh /app/install_miniconda.sh
 
-# Set python3.11 as the default python
+# Set python3.11 as the default pythn
 RUN ln -sf $(which python3.11) /usr/local/bin/python && \
     ln -sf $(which python3.11) /usr/local/bin/python3
 
