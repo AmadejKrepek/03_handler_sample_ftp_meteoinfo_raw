@@ -19,8 +19,8 @@ mkdir -p "$RUN_DIR" "$TARGET_DIR"
 echo ">> Downloading run.sh..."
 wget --ftp-user="$FTP_USER" --ftp-password="$FTP_PASS" \
   --timeout=30 --read-timeout=30 --tries=10 --waitretry=2 \
-  "ftp://$FTP_HOST$FTP_DIR/run.sh" -O "$RUN_DIR/run.sh"
-chmod +x "$RUN_DIR/run.sh"
+  "ftp://$FTP_HOST$FTP_DIR/run.sh" -O run.sh
+chmod +x run.sh
 
 BASE_URL="ftp://$FTP_HOST$FTP_DIR/inputs/"
 
