@@ -36,8 +36,10 @@ def handler(job):
         subprocess.run(["./run.sh"], check=True)
         logging.info("✅ run.sh executed successfully.")
     except subprocess.CalledProcessError as e:
-        logging.error(f"❌ Error during run.sh: {e}")
+        logging.error(f"❌ CalledProcessError during run.sh: {e}")
         return {"status": "warning", "step": "run.sh", "details": str(e)}
+    except Exception as e:
+        logging.error(f"❌ Error during run.sh: {e}")
     
     try:
         logging.info(">> Running upload_logs.sh...")
