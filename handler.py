@@ -37,6 +37,7 @@ def handler(job):
         logging.info("✅ run.sh executed successfully.")
     except subprocess.CalledProcessError as e:
         logging.error(f"❌ Error during run.sh: {e}")
+        subprocess.run(["./upload_logs.sh"], check=True)
         return {"status": "error", "step": "run.sh", "details": str(e)}
     
     try:
