@@ -13,6 +13,18 @@ CSV_DIR="/app/run"
 : "${FTP_USER:?Missing FTP_USER}"
 : "${FTP_PASS:?Missing FTP_PASS}"
 
+# Provided by user input (via handler.py)
+: "${PROJECT_NAME:?Missing PROJECT_NAME}"
+: "${EXPERIMENT_NAME:?Missing EXPERIMENT_NAME}"
+
+# Sanitize to keep folder structure safe (avoid accidental slashes)
+PROJECT_NAME_SAFE="${PROJECT_NAME//\//_}"
+EXPERIMENT_NAME_SAFE="${EXPERIMENT_NAME//\//_}"
+
+# Execution timestamp folder (when this script was executed)
+# Using YYYY_MM_DD_HH_mm_ss (includes hour to prevent collisions).
+EXEC_TS="${EXEC_TS:-$(date +"%Y_%m_%d_%H_%M_%S")}"
+
 upload_file() {
   local src="$1"
   local remote_dir="$2"
@@ -66,14 +78,12 @@ for DOM in "${DOMAINS[@]}"; do
   latest_file=""
 
   if [[ "$has_wrfoutcustom" -eq 1 ]]; then
-    # Latest wrfoutcustom for this domain
     latest_file=$(
       find "$CSV_DIR" -maxdepth 1 -type f -name "wrfoutcustom_${DOM}_????-??-??_??:??:??" \
       | sort \
       | tail -n 1
     )
   else
-    # Fall back to latest wrfout for this domain (so we still get YYYY/MM/DD/HH)
     latest_file=$(
       find "$CSV_DIR" -maxdepth 1 -type f -name "wrfout_${DOM}_????-??-??_??:??:??" \
       | sort \
@@ -88,7 +98,6 @@ for DOM in "${DOMAINS[@]}"; do
 
   # --- Extract time from whichever "latest_file" we chose ---
   filename_only=$(basename "$latest_file")
-  # Match any prefix ending with _YYYY-MM-DD_HH:MM:SS
   if [[ "$filename_only" =~ _([0-9]{4})-([0-9]{2})-([0-9]{2})_([0-9]{2}):[0-9]{2}:[0-9]{2}$ ]]; then
     YYYY="${BASH_REMATCH[1]}"
     MM="${BASH_REMATCH[2]}"
@@ -99,16 +108,20 @@ for DOM in "${DOMAINS[@]}"; do
   fi
 
   ID="${YYYY}_${MM}_${DD}_${HH}"
-  FTP_REMOTE_DIR="/logs/$YYYY/$MM/$DD/$HH/$DOM"   # domain-specific folder
 
-  # --- Upload logs (renamed with _ID) ONLY if wrfoutcustom or wrfout exists (guaranteed by checks above) ---
+  # New structure:
+  # /logs/<project_name>/<experiment_name>/<exec_ts>/<YYYY>/<MM>/<DD>/<HH>/
+  # (NO domain folder; we encode domain into filenames to avoid collisions)
+  FTP_REMOTE_DIR="/logs/${PROJECT_NAME_SAFE}/${EXPERIMENT_NAME_SAFE}/${EXEC_TS}/$YYYY/$MM/$DD/$HH"
+
+  # --- Upload logs (renamed with domain + ID) ---
   any_log=0
   for file in "${FILES_TO_UPLOAD[@]}"; do
     full_path="$RUN_DIR/$file"
     if [[ -f "$full_path" ]]; then
       any_log=1
       base=$(basename "$full_path")
-      renamed="${base}_${ID}"
+      renamed="${base}_${DOM}_${ID}"
       upload_file "$full_path" "$FTP_REMOTE_DIR" "$renamed"
     fi
   done

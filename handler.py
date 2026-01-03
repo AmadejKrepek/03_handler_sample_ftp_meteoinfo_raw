@@ -15,6 +15,22 @@ def handler(job):
     os.environ["FTP_HOST"] = job_input.get("ftp_host", "")
     os.environ["FTP_DIR"]  = job_input.get("ftp_dir", "")
 
+    # Provided by user input: used to build ftp folder tree in upload_logs.sh
+    os.environ["PROJECT_NAME"] = job_input.get("project_name", "")
+    os.environ["EXPERIMENT_NAME"] = job_input.get("experiment_name", "")
+
+    # Optional: allow caller to override execution timestamp folder
+    # (upload_logs.sh defaults to current timestamp if EXEC_TS is empty)
+    if job_input.get("exec_ts"):
+        os.environ["EXEC_TS"] = str(job_input.get("exec_ts"))
+
+    logging.info(
+        "Inputs: project_name=%r experiment_name=%r ftp_host=%r",
+        os.environ.get("PROJECT_NAME"),
+        os.environ.get("EXPERIMENT_NAME"),
+        os.environ.get("FTP_HOST"),
+    )
+
     try:
         logging.info(">> Running start_cleaner.sh...")
         subprocess.run(["./start_cleaner.sh"], check=True)
@@ -40,7 +56,7 @@ def handler(job):
         return {"status": "warning", "step": "run.sh", "details": str(e)}
     except Exception as e:
         logging.error(f"❌ Error during run.sh: {e}")
-    
+
     try:
         logging.info(">> Running upload_logs.sh...")
         subprocess.run(["./upload_logs.sh"], check=True)
